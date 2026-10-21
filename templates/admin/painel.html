@@ -1,0 +1,131 @@
+{% extends "admin/index.html" %}
+{% load formatos %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+  .igpm-destaque { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+                   margin-bottom: 20px; padding: 16px 20px; border-left: 4px solid var(--primary);
+                   background: var(--darkened-bg); }
+  .igpm-destaque .rotulo { color: var(--body-quiet-color); font-size: 0.8125rem; }
+  .igpm-destaque .valor { font-size: 1.75rem; font-weight: 600; color: var(--body-fg); }
+  .painel .module table { width: 100%; }
+  .painel .vazio { padding: 8px 10px; color: var(--body-quiet-color); }
+  .painel .alerta { color: var(--error-fg); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" class="painel">
+
+  <div class="igpm-destaque">
+    <div>
+      <div class="rotulo">IGP-M acumulado em 12 meses</div>
+      {% if igpm_12_meses %}
+        <div class="valor">{{ igpm_12_meses.acumulado|pct }}</div>
+        <div class="rotulo">
+          Referência: {{ igpm_12_meses.fim|date:"F/Y"|lower }}
+          (período de {{ igpm_12_meses.inicio|date:"m/Y" }} a {{ igpm_12_meses.fim|date:"m/Y" }})
+        </div>
+      {% else %}
+        <div class="valor">—</div>
+        <div class="rotulo">Ainda não há 12 meses seguidos de IGP-M no banco.</div>
+      {% endif %}
+    </div>
+    <form method="post" action="{% url 'admin:locacao_igpm_atualizar' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'admin:index' %}">
+      <button type="submit" class="button">Atualizar IGP-M agora</button>
+    </form>
+  </div>
+
+  {% if pendencias_igpm %}
+  <div class="module">
+    <table>
+      <caption>Pendências de IGP-M</caption>
+      <thead><tr><th>Locação</th><th>Reajuste em</th><th>Meses que faltam</th></tr></thead>
+      <tbody>
+      {% for p in pendencias_igpm %}
+        <tr>
+          <td><a href="{% url 'admin:locacao_locacao_change' p.locacao.pk %}">{{ p.locacao }}</a></td>
+          <td>{{ p.data_reajuste|date:"d/m/Y" }}</td>
+          <td class="alerta">{% for m in p.faltando %}{{ m|date:"m/Y" }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if falhas %}
+  <div class="module">
+    <table>
+      <caption>
+        <a href="{% url 'admin:locacao_aviso_changelist' %}?status__exact=falhou" class="section">Falhas de envio</a>
+      </caption>
+      <thead><tr><th>Quando</th><th>Aviso</th><th>Para</th><th>Erro</th></tr></thead>
+      <tbody>
+      {% for a in falhas %}
+        <tr>
+          <td>{{ a.enviado_em|date:"d/m/Y H:i" }}</td>
+          <td>{{ a.get_tipo_display }} — {{ a.locacao.imovel }}</td>
+          <td>{{ a.destino }}</td>
+          <td class="alerta">{{ a.erro|truncatechars:80 }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="module">
+    <table>
+      <caption>Próximos vencimentos ({{ dias_vencimentos }} dias)</caption>
+      {% if vencimentos %}
+      <thead><tr><th>Data</th><th>Locação</th><th>Valor</th></tr></thead>
+      <tbody>
+      {% for v in vencimentos %}
+        <tr>
+          <td>{{ v.data|date:"d/m/Y" }}{% if v.data == hoje %} <strong>(hoje)</strong>{% endif %}</td>
+          <td><a href="{% url 'admin:locacao_locacao_change' v.locacao.pk %}">{{ v.locacao }}</a></td>
+          <td>{{ v.locacao.valor_aluguel|reais }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+    {% if not vencimentos %}<p class="vazio">Nenhum vencimento no período.</p>{% endif %}
+  </div>
+
+  <div class="module">
+    <table>
+      <caption>Próximos reajustes ({{ dias_reajustes }} dias)</caption>
+      {% if reajustes %}
+      <thead><tr><th>Data</th><th>Locação</th><th>Valor atual</th><th>IGP-M</th><th>Valor novo</th></tr></thead>
+      <tbody>
+      {% for r in reajustes %}
+        <tr>
+          <td>{{ r.data|date:"d/m/Y" }}</td>
+          <td><a href="{% url 'admin:locacao_locacao_change' r.locacao.pk %}">{{ r.locacao }}</a></td>
+          <td>{{ r.locacao.valor_aluguel|reais }}</td>
+          {% if r.reajuste %}
+            <td>{{ r.reajuste.igpm_acumulado|pct }}</td>
+            <td>{{ r.reajuste.valor_novo|reais }}</td>
+          {% else %}
+            <td colspan="2" class="vazio">calculado no dia do aviso</td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+      {% endif %}
+    </table>
+    {% if not reajustes %}<p class="vazio">Nenhum reajuste no período.</p>{% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related" class="app-list">
+  {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+{% endblock %}

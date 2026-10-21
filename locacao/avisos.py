@@ -4,7 +4,9 @@ from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from .models import Aviso, Locacao
+from . import mensagens
+from .models import Aviso, Feriado, Locacao, Reajuste
+from .regras import datas
 
 
 def enviar(
@@ -45,3 +47,26 @@ def enviar(
     except IntegrityError:
         # Outra execução gravou o mesmo aviso ao mesmo tempo; o registro dela prevalece.
         return None
+
+
+def reenviar(aviso: Aviso) -> Aviso | None:
+    """Monta de novo o aviso e tenta enviá-lo, para o e-mail que está no cadastro agora.
+
+    Assim, se a falha foi um e-mail errado, basta corrigir o cadastro e reenviar.
+    Devolve None, sem enviar, se o aviso já saiu com sucesso.
+    """
+    locacao = aviso.locacao
+    if aviso.destinatario_tipo == Aviso.Destinatario.LOCADOR:
+        destino = locacao.imovel.locador.email
+    else:
+        destino = locacao.locatario.email
+
+    if aviso.tipo == Aviso.Tipo.PAGAMENTO:
+        ano, mes = (int(parte) for parte in aviso.referencia.split("-"))
+        feriados = set(Feriado.objects.values_list("data", flat=True))
+        assunto, corpo = mensagens.pagamento(locacao, datas.vencimento(ano, mes, locacao.dia_vencimento, feriados))
+    else:
+        reajuste = Reajuste.objects.get(pk=aviso.referencia)
+        assunto, corpo = mensagens.reajuste(reajuste, aviso.destinatario_tipo)
+
+    return enviar(locacao, aviso.tipo, aviso.destinatario_tipo, aviso.referencia, destino, assunto, corpo)

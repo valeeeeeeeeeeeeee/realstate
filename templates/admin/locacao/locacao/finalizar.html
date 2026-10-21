@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Início</a>
+  &rsaquo; <a href="{% url 'admin:locacao_locacao_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<p>As locações abaixo serão marcadas como <strong>{{ status }}</strong> e deixarão de gerar avisos e reajustes:</p>
+<ul>
+  {% for locacao in locacoes %}<li>{{ locacao }} (entrada em {{ locacao.data_entrada|date:"d/m/Y" }})</li>{% endfor %}
+</ul>
+{% if ignoradas %}<p>{{ ignoradas }} locação(ões) selecionada(s) não está(ão) ativa(s) e fica(m) como está(ão).</p>{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  {% for locacao in locacoes %}<input type="hidden" name="{{ action_checkbox_name }}" value="{{ locacao.pk }}">{% endfor %}
+  <input type="hidden" name="action" value="{{ acao }}">
+  <input type="hidden" name="confirmar" value="1">
+  <fieldset class="module aligned">
+    <div class="form-row">
+      {{ form.data.errors }}
+      <div class="flex-container">{{ form.data.label_tag }} {{ form.data }}</div>
+    </div>
+  </fieldset>
+  <div class="submit-row">
+    <input type="submit" value="Confirmar">
+    <a href="{% url 'admin:locacao_locacao_changelist' %}" class="button cancel-link">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

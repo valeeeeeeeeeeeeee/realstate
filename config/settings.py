@@ -21,7 +21,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    "locacao.apps.PainelAdminConfig",  # Django Admin com a página inicial do painel
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
