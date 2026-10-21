@@ -13,7 +13,7 @@ ANIVERSARIO = date(2026, 12, 15)
 
 def test_reajuste_a_avisar(locacao):
     assert reajuste_a_avisar(locacao, AVISO) == ANIVERSARIO
-    assert reajuste_a_avisar(locacao, date(2026, 11, 16)) is None
+    assert reajuste_a_avisar(locacao, date(2026, 11, 14)) is None
 
     locacao.status = Locacao.Status.RESCINDIDA
     assert reajuste_a_avisar(locacao, AVISO) is None

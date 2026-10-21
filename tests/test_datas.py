@@ -82,17 +82,26 @@ class TestAvisoDeReajuste:
     def test_mes_anterior_sem_o_dia(self):
         assert datas.data_aviso_reajuste(date(2026, 3, 31)) == date(2026, 2, 28)
 
-    def test_reajuste_com_aviso_hoje(self):
+    def test_proximo_aniversario(self):
         entrada = date(2025, 12, 15)
-        assert datas.reajuste_com_aviso_em(entrada, date(2026, 11, 15)) == date(2026, 12, 15)
-        assert datas.reajuste_com_aviso_em(entrada, date(2026, 11, 14)) is None
+        assert datas.proximo_aniversario(entrada, date(2025, 12, 20)) == date(2026, 12, 15)
+        assert datas.proximo_aniversario(entrada, date(2026, 12, 15)) == date(2026, 12, 15)
+        assert datas.proximo_aniversario(entrada, date(2026, 12, 16)) == date(2027, 12, 15)
+
+    def test_periodo_de_aviso_vai_do_aviso_ao_aniversario(self):
+        entrada = date(2025, 12, 15)
+        assert datas.reajuste_em_aviso(entrada, date(2026, 11, 14)) is None
+        assert datas.reajuste_em_aviso(entrada, date(2026, 11, 15)) == date(2026, 12, 15)
+        assert datas.reajuste_em_aviso(entrada, date(2026, 12, 15)) == date(2026, 12, 15)
+        assert datas.reajuste_em_aviso(entrada, date(2026, 12, 16)) is None
 
     def test_nao_avisa_antes_do_primeiro_ano(self):
         # O aviso do 1º reajuste é 15/11/2026, não 15/11/2025 (antes da entrada).
-        assert datas.reajuste_com_aviso_em(date(2025, 12, 15), date(2025, 11, 15)) is None
+        assert datas.reajuste_em_aviso(date(2025, 12, 15), date(2025, 11, 15)) is None
 
     def test_reajuste_em_janeiro_avisado_em_dezembro_do_ano_anterior(self):
-        assert datas.reajuste_com_aviso_em(date(2025, 1, 15), date(2025, 12, 15)) == date(2026, 1, 15)
+        assert datas.reajuste_em_aviso(date(2025, 1, 15), date(2025, 12, 15)) == date(2026, 1, 15)
 
     def test_reajuste_em_31_de_marco(self):
-        assert datas.reajuste_com_aviso_em(date(2025, 3, 31), date(2026, 2, 28)) == date(2026, 3, 31)
+        assert datas.reajuste_em_aviso(date(2025, 3, 31), date(2026, 2, 27)) is None
+        assert datas.reajuste_em_aviso(date(2025, 3, 31), date(2026, 2, 28)) == date(2026, 3, 31)

@@ -1,0 +1,18 @@
+{% autoescape off %}Olá, {{ nome }}.
+
+O aluguel do imóvel {{ endereco }} será reajustado em {{ data_reajuste }}, aniversário do contrato, pelo IGP-M acumulado nos últimos 12 meses.
+
+IGP-M mês a mês ({{ periodo }}):
+{% for m in meses %}  {{ m.mes }}: {{ m.variacao }}
+{% endfor %}
+IGP-M acumulado: {{ acumulado }}
+{% if negativo %}Como o IGP-M acumulado foi negativo, o reajuste fica em 0% e o valor do aluguel se mantém.
+{% endif %}
+Cálculo: {{ valor_atual }} × (1 + {{ percentual_aplicado }}) = {{ valor_novo }}
+
+Valor atual: {{ valor_atual }}
+Novo valor: {{ valor_novo }}, a partir de {{ data_reajuste }}
+
+Atenciosamente,
+Imobiliária
+{% endautoescape %}

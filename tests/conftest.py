@@ -1,10 +1,18 @@
 from datetime import date
 from decimal import Decimal
+from unittest import mock
 
 import pytest
 
 from locacao.models import IGPM, Imovel, Locacao, Locador, Locatario
 from locacao.regras import igpm
+
+
+@pytest.fixture(autouse=True)
+def sem_internet():
+    """Os testes nunca chamam a API do Banco Central de verdade."""
+    with mock.patch("locacao.bcb.buscar", return_value={}) as buscar:
+        yield buscar
 
 
 @pytest.fixture

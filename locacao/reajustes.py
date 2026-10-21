@@ -47,10 +47,10 @@ def preparar_reajuste(locacao: Locacao, data_reajuste: date, data_aviso: date) -
 
 
 def reajuste_a_avisar(locacao: Locacao, hoje: date) -> date | None:
-    """Data do reajuste cujo aviso sai hoje, se a locação estiver ativa."""
+    """Data do reajuste cujo período de aviso inclui hoje, se a locação estiver ativa."""
     if locacao.status != Locacao.Status.ATIVA:
         return None
-    return datas.reajuste_com_aviso_em(locacao.data_entrada, hoje)
+    return datas.reajuste_em_aviso(locacao.data_entrada, hoje)
 
 
 @transaction.atomic

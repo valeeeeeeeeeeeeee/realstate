@@ -44,13 +44,22 @@ def data_aviso_reajuste(data_reajuste: date) -> date:
     return data_reajuste - relativedelta(months=1)
 
 
-def reajuste_com_aviso_em(data_entrada: date, hoje: date) -> date | None:
-    """Aniversário cujo aviso de reajuste cai em `hoje`, ou None."""
-    n = hoje.year - data_entrada.year
-    for candidato in (n, n + 1):
-        if candidato >= 1 and data_aviso_reajuste(aniversario(data_entrada, candidato)) == hoje:
-            return aniversario(data_entrada, candidato)
-    return None
+def proximo_aniversario(data_entrada: date, hoje: date) -> date:
+    """Primeiro aniversário do contrato em `hoje` ou depois."""
+    n = max(hoje.year - data_entrada.year, 1)
+    while aniversario(data_entrada, n) < hoje:
+        n += 1
+    return aniversario(data_entrada, n)
+
+
+def reajuste_em_aviso(data_entrada: date, hoje: date) -> date | None:
+    """Aniversário cujo período de aviso inclui `hoje`, ou None.
+
+    O período vai da data do aviso (1 mês antes) até o próprio aniversário. Assim, se o
+    aviso não pôde sair no dia certo (IGP-M atrasado, PC desligado), ele sai depois.
+    """
+    proximo = proximo_aniversario(data_entrada, hoje)
+    return proximo if data_aviso_reajuste(proximo) <= hoje else None
 
 
 def eh_aniversario(data_entrada: date, hoje: date) -> bool:

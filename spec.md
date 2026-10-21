@@ -142,7 +142,7 @@ Restrição de unicidade em (`locacao_id`, `tipo`, `destinatario_tipo`, `referen
 - A API do **Banco Central (SGS, série 189)** é consultada todo dia:
   `https://api.bcb.gov.br/dados/serie/bcdata.sgs.189/dados?formato=json&dataInicial=...`
 - Os meses novos são gravados na tabela `igpm`.
-- Se faltar algum mês do período na hora do aviso, o aviso **não é enviado**. A pendência aparece no painel e o sistema tenta de novo no dia seguinte.
+- Se faltar algum mês do período na hora do aviso, o aviso **não é enviado**. A pendência aparece no painel e o sistema tenta de novo no dia seguinte, até a data do reajuste. O período de IGP-M continua sendo o da data original do aviso.
 
 ### 4.6 Data de saída
 - Quando a `data_saida` chega, o sistema **não faz nada**. A locação continua `ativa` e segue gerando avisos e reajustes.
@@ -152,8 +152,8 @@ Restrição de unicidade em (`locacao_id`, `tipo`, `destinatario_tipo`, `referen
 
 - Uma rotina diária (ex.: às 08:00) roda dentro da aplicação, na seguinte ordem:
   1. Atualiza o IGP-M.
-  2. Aplica os reajustes do dia.
-  3. Envia os avisos de reajuste.
+  2. Envia os avisos de reajuste (os que ainda não saíram, entre a data do aviso e a do reajuste).
+  3. Aplica os reajustes do dia. Vem depois do passo 2 para aplicar também um reajuste calculado no próprio dia, e antes do 4 para o aviso de pagamento já sair com o valor novo.
   4. Envia os avisos de pagamento.
 - **Recuperação:** como roda no PC da imobiliária, a máquina pode estar desligada no horário. Ao iniciar, a rotina processa todos os dias pendentes desde a última execução, registrada em uma tabela `execucao`.
 - Graças à unicidade em `aviso`, rodar a rotina de novo é seguro.
@@ -164,7 +164,7 @@ Restrição de unicidade em (`locacao_id`, `tipo`, `destinatario_tipo`, `referen
 - Só por **e-mail**, via SMTP configurável (servidor, porta, usuário, senha, remetente). Pode ser uma conta Gmail com senha de app, que é gratuita.
 - As credenciais ficam em um arquivo `.env`, fora do banco e do git.
 - Uma falha de envio vai para o log com `status = falhou` e não impede os demais envios.
-- Os textos dos avisos ficam em templates editáveis (arquivos), com variáveis como `{nome}`, `{valor}`, `{vencimento}` etc.
+- Os textos dos avisos ficam em templates editáveis em `templates/avisos/` (assunto e corpo, um arquivo cada), com variáveis como `{{ nome }}`, `{{ valor }}`, `{{ vencimento }}` etc. Os valores já chegam formatados (ex.: `R$ 1.500,00`, `15/12/2026`, `4,12%`).
 
 ## 7. Painel de administração
 
@@ -197,7 +197,7 @@ Escala: cerca de 10 clientes. Desempenho não pesa; o critério é ter pouco có
   - Views extras: **atualizar IGP-M agora** e **teste de envio de e-mail**
   - Página inicial customizada com próximos vencimentos, próximos reajustes, falhas de envio e pendências de IGP-M
 - **SQLite** pelo ORM do Django, com migrações nativas
-- **APScheduler** (BackgroundScheduler), iniciado no `AppConfig.ready()`, para a rotina diária e a recuperação ao iniciar. Também há o comando `manage.py rodar_rotina` para rodar à mão
+- **APScheduler** (BackgroundScheduler), iniciado pelo `run.py`, para a rotina diária e a recuperação ao iniciar. Também há o comando `manage.py rodar_rotina` para rodar à mão
 - `django.core.mail` para o envio por SMTP, configurado pelo `.env` (`python-dotenv`). Templates dos avisos em arquivos de template do Django
 - `holidays` para os feriados nacionais e `python-dateutil` para as datas
 - **Waitress** para servir em `localhost`. A aplicação inicia com o Windows por um atalho na pasta Inicializar (`pythonw run.py`)

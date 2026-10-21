@@ -1,0 +1,11 @@
+{% autoescape off %}Olá, {{ nome }}.
+
+Este é um lembrete de que o aluguel do imóvel {{ endereco }} vence hoje, {{ vencimento }}.
+
+Valor: {{ valor }}
+
+Se o pagamento já foi feito, por favor desconsidere esta mensagem.
+
+Atenciosamente,
+Imobiliária
+{% endautoescape %}

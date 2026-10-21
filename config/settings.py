@@ -45,7 +45,8 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # templates/avisos/ guarda os textos editáveis dos e-mails.
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -111,3 +112,26 @@ else:
     }
 
 DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_FROM", "avisos@localhost")
+
+
+# Rotina diária (HH:MM). Ela também roda ao iniciar, para recuperar os dias perdidos.
+ROTINA_HORARIO = os.environ.get("ROTINA_HORARIO", "08:00")
+
+# O painel roda sem console (pythonw), então o log vai para um arquivo.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"simples": {"format": "%(asctime)s %(levelname)s %(name)s: %(message)s"}},
+    "handlers": {
+        "arquivo": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "rotina.log",
+            "maxBytes": 1_000_000,
+            "backupCount": 3,
+            "encoding": "utf-8",
+            "formatter": "simples",
+        },
+        "console": {"class": "logging.StreamHandler", "formatter": "simples"},
+    },
+    "loggers": {"locacao": {"handlers": ["arquivo", "console"], "level": "INFO"}},
+}
