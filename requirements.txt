@@ -1,0 +1,10 @@
+Django>=6.1,<6.2
+APScheduler>=3.11,<4
+holidays>=0.107
+python-dateutil>=2.9
+python-dotenv>=1.2
+waitress>=3.0
+
+# testes
+pytest>=9.1
+pytest-django>=4.14
